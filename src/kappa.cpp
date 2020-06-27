@@ -1,39 +1,44 @@
 #include <Arduino.h>
 
-#include <BluetoothSerial.h>
 #include <Alfredo_NoU2.h>
+#include <WiFi.h>
+#include <WebServer.h>
 
-BluetoothSerial bluetooth;
+#include "handlers.h"
 
-NoU_Motor shooterMotor(1);
-NoU_Motor turretMotor(2);
+const char *ssid = "KappaAP";
 
-float shooterPower, turretPower;
-long lastTimePacketReceived = 0;
+IPAddress local_ip(192, 168, 4, 1);
+IPAddress gateway(192, 168, 4, 1);
+IPAddress subnet(255, 255, 255, 0);
 
-void setup() {
+WebServer server(80);
+
+void setup()
+{
     Serial.begin(9600);
     RSL::initialize();
-    bluetooth.begin("DefaultBot");
+
+    WiFi.enableAP(true);
+    WiFi.softAPConfig(local_ip, gateway, subnet);
+    WiFi.softAP(ssid);
+
+    server.on("/", []() { handleRoot(server); });
+    server.begin();
 }
 
-void loop() {
-    while (bluetooth.available() > 0) {
-        lastTimePacketReceived = millis();
-        if ((bluetooth.read()) == 'z') {
-            shooterPower = bluetooth.parseFloat();
-            turretPower = bluetooth.parseFloat();
-        }
-    }
-    shooterMotor.set(shooterPower * .675);
-    turretMotor.set(turretPower * .625);
+void loop()
+{
+    server.handleClient();
 
     // RSL logic
-    if (millis() - lastTimePacketReceived > 1000) {
-        RSL::setState(RSL_DISABLED);
-    }
-    else {
-        RSL::setState(RSL_ENABLED);
-    }
-    RSL::update();
+    // if (millis() - lastTimePacketReceived > 1000)
+    // {
+    //     RSL::setState(RSL_DISABLED);
+    // }
+    // else
+    // {
+    //     RSL::setState(RSL_ENABLED);
+    // }
+    // RSL::update();
 }
