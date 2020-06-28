@@ -1,3 +1,6 @@
 [submodule "Alfredo-NoU2"]
 	path = Alfredo-NoU2
 	url = git@github.com:morzack/Alfredo-NoU2.git
+[submodule "ArduinoJson"]
+	path = ArduinoJson
+	url = git@github.com:bblanchon/ArduinoJson.git

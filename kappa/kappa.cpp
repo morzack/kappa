@@ -7,8 +7,6 @@
 #include "robot.h"
 #include "botServer.h"
 
-const char *ssid = "kappanet";
-
 IPAddress local_ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
@@ -31,12 +29,9 @@ BotServer botServer(&robot, &server);
 
 void setup()
 {
-    Serial.begin(9600);
     RSL::initialize();
 
-    WiFi.enableAP(true);
-    WiFi.softAPConfig(local_ip, gateway, subnet);
-    WiFi.softAP(ssid);
+    WiFi.softAP("kappanet");
 
     botServer.registerHandlers();
 
@@ -49,7 +44,7 @@ void loop()
 {
     server.handleClient();
 
-    robot.execute();
+    // robot.execute();
 
     // RSL logic
     // if (millis() - lastTimePacketReceived > 1000)
