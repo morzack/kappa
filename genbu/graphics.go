@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	ScreenWidth  = 256
-	ScreenHeight = 256
+	ScreenWidth  = 100
+	ScreenHeight = 100
 
 	WindowTitle = "genbu"
 )

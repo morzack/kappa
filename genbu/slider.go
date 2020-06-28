@@ -25,6 +25,8 @@ const (
 	sliderSpriteHeight = 16
 
 	sliderSpriteScale = 2
+
+	dragRadius = 30
 )
 
 func NewSlider(x int, y int, pxHeight int) (Slider, error) {
@@ -59,9 +61,31 @@ func (s *Slider) Draw(screen *ebiten.Image) {
 }
 
 func (s *Slider) SetPercent(percent int) {
+	if percent < 0 {
+		percent = 0
+	} else if percent > 100 {
+		percent = 100
+	}
 	s.sliderPos = int(math.Round(float64(percent) / 100 * float64(s.pxHeight)))
 }
 
 func (s Slider) GetPercent() int {
 	return int(math.Round(float64(s.sliderPos) / float64(s.pxHeight) * 100))
+}
+
+func (s Slider) ScreenPosToPercent(x, y int) int {
+	calculatedY := s.y - y + s.pxHeight + sliderSpriteHeight/2
+	return int(math.Round(float64(calculatedY) / float64(s.pxHeight) * 100))
+}
+
+func (s Slider) CheckInRadius(x, y int) bool {
+	return math.Hypot(float64(x-(s.x+sliderSpriteWidth/2)), float64(y-(s.y+s.pxHeight-s.sliderPos+sliderSpriteHeight/2))) < dragRadius
+}
+
+func (s *Slider) Update(input *Input) {
+	if s.CheckInRadius(input.mX, input.mY) && input.mState == mousePressed {
+		s.SetPercent(s.ScreenPosToPercent(input.mX, input.mY))
+	} else {
+		s.SetPercent(50)
+	}
 }
