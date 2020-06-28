@@ -12,3 +12,7 @@ make a file `.build_config` and populate it with the following variables
 - `ESP_MAKE_DIR` -- directory where makeEspArduino was cloned
 
 to build/flash, use `./build.sh`
+
+## control interface
+the control station for kappa will be built using [ebiten](https://github.com/hajimehoshi/ebiten), because that's a fun and new thing to use.
+Ideally this would end up being deployed to some kind of webpage that the robot can serve, and then a phone could connect and do things.
