@@ -3,6 +3,8 @@ include .build_config
 SKETCH = src/kappa.cpp
 CHIP = esp32
 
+BUILD_DIR = build/
+
 LIBS = Alfredo-NoU2 \
 	$(ESP_LIBS)/WiFi/src \
 	$(ESP_LIBS)/WebServer/src \

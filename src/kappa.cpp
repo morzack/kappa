@@ -4,15 +4,30 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
-#include "handlers.h"
+#include "robot.h"
+#include "botServer.h"
 
-const char *ssid = "KappaAP";
+const char *ssid = "kappanet";
 
 IPAddress local_ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 WebServer server(80);
+
+NoU_Motor shooterMotor(0);
+Shooter shooter(&shooterMotor);
+
+NoU_Motor turretMotor(1);
+Turret turret(&turretMotor);
+
+NoU_Motor leftMotors(3);
+NoU_Motor rightMotors(4);
+NoU_Drivetrain drivetrain(&leftMotors, &rightMotors);
+
+Robot robot(&shooter, &turret, &drivetrain);
+
+BotServer botServer(&robot, &server);
 
 void setup()
 {
@@ -23,13 +38,18 @@ void setup()
     WiFi.softAPConfig(local_ip, gateway, subnet);
     WiFi.softAP(ssid);
 
-    server.on("/", []() { handleRoot(server); });
+    botServer.registerHandlers();
+
+    /*** Webpage Serving ***/
+
     server.begin();
 }
 
 void loop()
 {
     server.handleClient();
+
+    robot.execute();
 
     // RSL logic
     // if (millis() - lastTimePacketReceived > 1000)
