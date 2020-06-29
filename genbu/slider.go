@@ -89,3 +89,7 @@ func (s *Slider) Update(input *Input) {
 		s.SetPercent(50)
 	}
 }
+
+func (s Slider) GetPercentFloatOffset() float32 {
+	return float32(s.GetPercent()-50) / 50
+}

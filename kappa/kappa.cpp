@@ -13,10 +13,10 @@ IPAddress subnet(255, 255, 255, 0);
 
 WebServer server(80);
 
-NoU_Motor shooterMotor(0);
+NoU_Motor shooterMotor(1);
 Shooter shooter(&shooterMotor);
 
-NoU_Motor turretMotor(1);
+NoU_Motor turretMotor(2);
 Turret turret(&turretMotor);
 
 NoU_Motor leftMotors(3);
@@ -35,8 +35,6 @@ void setup()
 
     botServer.registerHandlers();
 
-    /*** Webpage Serving ***/
-
     server.begin();
 }
 
@@ -44,7 +42,7 @@ void loop()
 {
     server.handleClient();
 
-    // robot.execute();
+    robot.execute();
 
     // RSL logic
     // if (millis() - lastTimePacketReceived > 1000)

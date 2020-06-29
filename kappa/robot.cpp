@@ -1,7 +1,10 @@
 #include "robot.h"
 
 /*** Shooter ***/
-Shooter::Shooter(NoU_Motor *motor) : motor(motor){};
+Shooter::Shooter(NoU_Motor *motor) : motor(motor)
+{
+    motor->setInverted(true);
+}
 
 void Shooter::shoot(float power)
 {
@@ -45,7 +48,7 @@ Robot::Robot(Shooter *shooter, Turret *turret, NoU_Drivetrain *drivetrain) : sho
 {
     drivetrain->setMaximumOutput(dtMaxPower);
     drivetrain->setInputDeadband(drivetrainDeadband);
-    drivetrain->setMinimumOutput(0);
+    drivetrain->setMinimumOutput(-dtMaxPower);
 }
 
 void Robot::moveTurret(TurretState direction)
