@@ -1,6 +1,6 @@
 #include "botServer.h"
 
-BotServer::BotServer(Robot *robot, WebServer *server) : robot(robot), server(server) {}
+BotServer::BotServer(Robot *robot, WebServer *server, websockets::WebsocketsServer *socketServer) : robot(robot), server(server), socketServer(socketServer) {}
 
 void BotServer::registerHandlers()
 {
@@ -54,6 +54,60 @@ void BotServer::commandPOST()
     robot->shootTurret(json["shootPower"]);
 
     server->send(200, "text/html", "ok");
+}
+
+/*** WEBSOCKETS ***/
+void BotServer::initClient(websockets::WebsocketsClient *client) {
+    client->send("ACK: kappanet connected, peko");
+}
+
+bool BotServer::loopClient(websockets::WebsocketsClient *client) {
+    // return true/false based on disconnect
+    websockets::WebsocketsMessage message = client->readBlocking();
+    switch (message.type()) {
+        case websockets::MessageType::Empty:
+            break;
+        case websockets::MessageType::Text:
+            break;
+        case websockets::MessageType::Binary:
+            break;
+        case websockets::MessageType::Ping:
+            break;
+        case websockets::MessageType::Pong:
+            break;
+        case websockets::MessageType::Close:
+            return false;
+        default:
+            // lol idk we'll just peko whatever
+            break;
+    }
+    String data = getTelemetry();
+    client->send(data != "" ? data + ", peko" : "peko");
+    return true;
+}
+
+void BotServer::endClient(websockets::WebsocketsClient *client) {
+    client->send("END: kappanet disconnect, peko");
+}
+
+String BotServer::getTelemetry() {
+    return "";
+}
+
+void BotServer::handleNewClient(websockets::WebsocketsClient *client) {
+    initClient(client);
+    bool looping = true;
+    while (looping) {
+        looping = loopClient(client);
+    }
+    endClient(client);
+}
+
+void BotServer::socketLoop() {
+    websockets::WebsocketsClient client = socketServer->accept();
+    if (client.available()) {
+        handleNewClient(&client);
+    }
 }
 
 /*** UTIL ***/
