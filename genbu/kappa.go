@@ -23,12 +23,15 @@ type KappaCommand struct {
 	TurretMode turretState `json:"turretMode"`
 }
 
+const (
+	ip = "192.168.4.1"
+)
+
 type Kappa struct {
-	ip string
 }
 
 func (k *Kappa) PostData(data []byte, endpoint string) error {
-	resp, err := http.Post(fmt.Sprintf("http://%s/%s", k.ip, endpoint), "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post(fmt.Sprintf("http://%s/%s", ip, endpoint), "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -47,7 +50,7 @@ func (k *Kappa) PostData(data []byte, endpoint string) error {
 }
 
 func (k *Kappa) ping() (bool, error) {
-	resp, err := http.Get(fmt.Sprintf("http://%s/ping", k.ip))
+	resp, err := http.Get(fmt.Sprintf("http://%s/ping", ip))
 	if err != nil {
 		return false, err
 	}

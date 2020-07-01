@@ -18,18 +18,37 @@ void BotServer::pingHandlerGET()
 /*** ROBOT HANDLERS ***/
 void BotServer::commandPOST()
 {
-    StaticJsonDocument<250> json;
-    if (!extractBody(json))
+    if (!server->hasArg("plain"))
     {
+        server->send(400, "text/html", "JSON body missing");
         return;
     }
-    if (!(json.containsKey("leftPower") &&
-          json.containsKey("rightPower") &&
-          json.containsKey("shootPower") &&
-          json.containsKey("turretMode")))
-    {
-        server->send(400, "text/html", "JSON keys missing");
+    String body = server->arg("plain");
+    if (handleCommandString(body)) {
+        server->send(200, "text/html", "ok");
         return;
+    }
+    server->send(400, "text/html", "malformed command");
+}
+
+bool BotServer::handleCommandString(String command) {
+    if (command == "") {
+        return false;
+    }
+
+    StaticJsonDocument<250> json;
+    DeserializationError err;
+    err = deserializeJson(json, command.substring(0, command.length()-5));
+    if (err != DeserializationError::Ok) {
+        return false;
+    }
+
+    if (!(json.containsKey("leftPower") &&
+                json.containsKey("rightPower") &&
+                json.containsKey("shootPower") &&
+                json.containsKey("turretMode")))
+    {
+        return false;
     }
 
     String turretStateStr = json["turretMode"];
@@ -53,21 +72,24 @@ void BotServer::commandPOST()
     robot->tankDrive(json["leftPower"], json["rightPower"]);
     robot->shootTurret(json["shootPower"]);
 
-    server->send(200, "text/html", "ok");
+    return true;
 }
 
 /*** WEBSOCKETS ***/
 void BotServer::initClient(websockets::WebsocketsClient *client) {
-    client->send("ACK: kappanet connected, peko");
+    client->send("ACK: kappanet connected");
 }
 
 bool BotServer::loopClient(websockets::WebsocketsClient *client) {
     // return true/false based on disconnect
     websockets::WebsocketsMessage message = client->readBlocking();
     switch (message.type()) {
+        // for most of these messages we can just ignore them
+        // really the only thing that we care about is the "Text" type
         case websockets::MessageType::Empty:
             break;
         case websockets::MessageType::Text:
+            handleCommandString(message.data());
             break;
         case websockets::MessageType::Binary:
             break;
@@ -78,16 +100,15 @@ bool BotServer::loopClient(websockets::WebsocketsClient *client) {
         case websockets::MessageType::Close:
             return false;
         default:
-            // lol idk we'll just peko whatever
             break;
     }
-    String data = getTelemetry();
-    client->send(data != "" ? data + ", peko" : "peko");
+    String telemetryData = getTelemetry();
+    client->send(telemetryData);
     return true;
 }
 
 void BotServer::endClient(websockets::WebsocketsClient *client) {
-    client->send("END: kappanet disconnect, peko");
+    client->send("END: kappanet disconnect");
 }
 
 String BotServer::getTelemetry() {
@@ -110,15 +131,3 @@ void BotServer::socketLoop() {
     }
 }
 
-/*** UTIL ***/
-bool BotServer::extractBody(StaticJsonDocument<250> &json)
-{
-    if (!server->hasArg("plain"))
-    {
-        server->send(400, "text/html", "JSON body missing");
-        return false;
-    }
-    String body = server->arg("plain");
-    deserializeJson(json, body);
-    return true;
-}

@@ -19,6 +19,8 @@ public:
     /*** ROBOT HANDLERS ***/
     void commandPOST();
 
+    bool handleCommandString(String command);
+
     /*** WEBSOCKET HANDLER ***/
     void initClient(websockets::WebsocketsClient *client);
     bool loopClient(websockets::WebsocketsClient *client);
