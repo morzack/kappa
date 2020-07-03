@@ -13,6 +13,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	defer func() {
+		if err := genbu.Kappa.Disconnect(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	if err := ebiten.RunGame(genbu); err != nil {
 		log.Fatal(err)
 	}

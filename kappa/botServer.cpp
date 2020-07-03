@@ -53,6 +53,7 @@ void BotServer::SocketLoop() {
 }
 
 String BotServer::GenTelemetry() {
+    // this doesn't have to be json, just a string sent to genbu
     return "";
 }
 
