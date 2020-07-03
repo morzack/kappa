@@ -1,73 +1,65 @@
 #include "robot.h"
 
 /*** Shooter ***/
-Shooter::Shooter(NoU_Motor *motor) : motor(motor)
-{
+Shooter::Shooter(NoU_Motor *motor) : motor(motor) {
     motor->setInverted(true);
 }
 
-void Shooter::shoot(float power)
-{
+void Shooter::Shoot(float power) {
     setPower = power > maxPower ? maxPower : (power < minPower ? minPower : power);
 }
 
-void Shooter::execute()
-{
+void Shooter::Execute() {
     motor->set(setPower);
 }
 
 /*** Turret ***/
-Turret::Turret(NoU_Motor *motor) : motor(motor){};
+Turret::Turret(NoU_Motor *motor) : motor(motor) {}
 
-void Turret::setDirection(TurretState s)
-{
+void Turret::SetState(TurretState s) {
     state = s;
 }
 
-void Turret::execute()
-{
-    switch (state)
-    {
-    case TurretState::CLOCKWISE:
-        motor->set(-turretMovePower);
-        break;
-    case TurretState::COUNTERCLOCKWISE:
-        motor->set(turretMovePower);
-        break;
-    case TurretState::STOP:
-        motor->set(0);
-        break;
-    default:
-        motor->set(0);
-        break;
+void Turret::Execute() {
+    switch (state) {
+        case TurretState::CLOCKWISE:
+            motor->set(-turretMovePower);
+            break;
+        case TurretState::COUNTERCLOCKWISE:
+            motor->set(turretMovePower);
+            break;
+        case TurretState::STOP:
+            motor->set(0);
+            break;
+        default:
+            motor->set(0);
+            break;
     }
 }
 
 /*** Robot ***/
-Robot::Robot(Shooter *shooter, Turret *turret, NoU_Drivetrain *drivetrain) : shooter(shooter), turret(turret), drivetrain(drivetrain)
-{
+Robot::Robot(Shooter *shooter, Turret *turret, NoU_Drivetrain *drivetrain) :
+        shooter(shooter),
+        turret(turret),
+        drivetrain(drivetrain) {
     drivetrain->setMaximumOutput(dtMaxPower);
     drivetrain->setInputDeadband(drivetrainDeadband);
     drivetrain->setMinimumOutput(-dtMaxPower);
 }
 
-void Robot::moveTurret(TurretState direction)
-{
-    turret->setDirection(direction);
+void Robot::MoveTurret(TurretState direction) {
+    turret->SetState(direction);
 }
 
-void Robot::shootTurret(float power)
-{
-    shooter->shoot(power);
+void Robot::ShootTurret(float power) {
+    shooter->Shoot(power);
 }
 
-void Robot::tankDrive(float leftPower, float rightPower)
-{
+void Robot::TankDrive(float leftPower, float rightPower) {
     drivetrain->tankDrive(leftPower, rightPower);
 }
 
-void Robot::execute()
-{
-    shooter->execute();
-    turret->execute();
+void Robot::Execute() {
+    shooter->Execute();
+    turret->Execute();
 }

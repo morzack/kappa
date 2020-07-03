@@ -2,41 +2,30 @@
 #define BOT_SERVER_H_
 
 #include "robot.h"
-#include <WebServer.h>
 #include <ArduinoWebsockets.h>
 #include <ArduinoJson.h>
 
 struct BotServer
 {
 public:
-    BotServer(Robot *robot, WebServer *server, websockets::WebsocketsServer *socketServer);
+    BotServer(Robot *robot, websockets::WebsocketsServer *socketServer);
 
-    void registerHandlers();
+    void HandleNewClient(websockets::WebsocketsClient *client);
 
-    /*** GENERIC HANDLERS ***/
-    void pingHandlerGET();
-
-    /*** ROBOT HANDLERS ***/
-    void commandPOST();
-
-    bool handleCommandString(String command);
-
-    /*** WEBSOCKET HANDLER ***/
-    void initClient(websockets::WebsocketsClient *client);
-    bool loopClient(websockets::WebsocketsClient *client);
-    void endClient(websockets::WebsocketsClient *client);
-
-    String getTelemetry();
-
-    void handleNewClient(websockets::WebsocketsClient *client);
-    void socketLoop();
+    /** WEBSOCKET HANDLERS **/
+    void InitClient(websockets::WebsocketsClient *client);
+    bool LoopClient(websockets::WebsocketsClient *client);
+    void EndClient(websockets::WebsocketsClient *client);
+    void SocketLoop();
+    
+    String GenTelemetry();
+    
+    /** PARSE INBOUND **/
+    bool HandleCommandString(String command);
 
 private:
     Robot *robot;
-    WebServer *server;
     websockets::WebsocketsServer *socketServer;
-
-    bool extractBody(StaticJsonDocument<250> &json);
 };
 
 #endif

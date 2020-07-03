@@ -3,14 +3,13 @@
 
 #include <Alfredo_NoU2.h>
 
-struct Shooter
-{
+struct Shooter {
 public:
     Shooter(NoU_Motor *motor);
 
-    void shoot(float power);
+    void Shoot(float power);
 
-    void execute();
+    void Execute();
 
 private:
     NoU_Motor *motor;
@@ -21,21 +20,19 @@ private:
     const float minPower = -1;
 };
 
-enum TurretState
-{
+enum TurretState {
     STOP,
     CLOCKWISE,
     COUNTERCLOCKWISE
 };
 
-struct Turret
-{
+struct Turret {
 public:
     Turret(NoU_Motor *motor);
 
-    void setDirection(TurretState state);
+    void SetState(TurretState state);
 
-    void execute();
+    void Execute();
 
 private:
     NoU_Motor *motor;
@@ -45,17 +42,16 @@ private:
     const float turretMovePower = .5f;
 };
 
-struct Robot
-{
+struct Robot {
 public:
     Robot(Shooter *shooter, Turret *turret, NoU_Drivetrain *drivetrain);
 
-    void moveTurret(TurretState direction);
-    void shootTurret(float power);
+    void MoveTurret(TurretState direction);
+    void ShootTurret(float power);
 
-    void tankDrive(float leftPower, float rightPower);
+    void TankDrive(float leftPower, float rightPower);
 
-    void execute();
+    void Execute();
 
 private:
     Shooter *shooter;

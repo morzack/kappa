@@ -8,46 +8,35 @@
 #include "robot.h"
 #include "botServer.h"
 
-IPAddress local_ip(192, 168, 4, 1);
-IPAddress gateway(192, 168, 4, 1);
-IPAddress subnet(255, 255, 255, 0);
+Robot* robot;
+BotServer* botServer;
 
-WebServer server(80);
+void setup() {
+    websockets::WebsocketsServer websocketServer;
 
-websockets::WebsocketsServer websocketServer;
+    NoU_Motor shooterMotor(1);
+    Shooter shooter(&shooterMotor);
 
-NoU_Motor shooterMotor(1);
-Shooter shooter(&shooterMotor);
+    NoU_Motor turretMotor(2);
+    Turret turret(&turretMotor);
 
-NoU_Motor turretMotor(2);
-Turret turret(&turretMotor);
+    NoU_Motor leftMotors(3);
+    NoU_Motor rightMotors(4);
+    NoU_Drivetrain drivetrain(&leftMotors, &rightMotors);
 
-NoU_Motor leftMotors(3);
-NoU_Motor rightMotors(4);
-NoU_Drivetrain drivetrain(&leftMotors, &rightMotors);
+    robot = new Robot(&shooter, &turret, &drivetrain);
+    botServer = new BotServer(robot, &websocketServer);
 
-Robot robot(&shooter, &turret, &drivetrain);
-
-BotServer botServer(&robot, &server, &websocketServer);
-
-void setup()
-{
     RSL::initialize();
 
     WiFi.softAP("kappanet");
 
-    botServer.registerHandlers();
-
     websocketServer.listen(8080);
-    server.begin();
 }
 
-void loop()
-{
-    server.handleClient();
-    botServer.socketLoop();
-
-    robot.execute();
+void loop() {
+    botServer->SocketLoop();
+    robot->Execute();
 
     // RSL logic
     // if (millis() - lastTimePacketReceived > 1000)

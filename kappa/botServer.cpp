@@ -1,37 +1,62 @@
 #include "botServer.h"
 
-BotServer::BotServer(Robot *robot, WebServer *server, websockets::WebsocketsServer *socketServer) : robot(robot), server(server), socketServer(socketServer) {}
+BotServer::BotServer(Robot *robot, websockets::WebsocketsServer *socketServer)
+        : robot(robot),
+          socketServer(socketServer) {}
 
-void BotServer::registerHandlers()
-{
-    server->on("/ping", HTTP_GET, [this]() { pingHandlerGET(); });
-
-    server->on("/command", HTTP_POST, [this]() { commandPOST(); });
-}
-
-/*** GENERIC HANDLERS ***/
-void BotServer::pingHandlerGET()
-{
-    server->send(200, "text/html", "kappa");
-}
-
-/*** ROBOT HANDLERS ***/
-void BotServer::commandPOST()
-{
-    if (!server->hasArg("plain"))
-    {
-        server->send(400, "text/html", "JSON body missing");
-        return;
+void BotServer::HandleNewClient(websockets::WebsocketsClient *client) {
+    InitClient(client);
+    bool looping = true;
+    while (looping) {
+        looping = LoopClient(client);
     }
-    String body = server->arg("plain");
-    if (handleCommandString(body)) {
-        server->send(200, "text/html", "ok");
-        return;
-    }
-    server->send(400, "text/html", "malformed command");
+    EndClient(client);
 }
 
-bool BotServer::handleCommandString(String command) {
+/*** WEBSOCKET HANDLERS ***/
+void BotServer::InitClient(websockets::WebsocketsClient *client) {
+    client->send("kappanet connected");
+}
+
+bool BotServer::LoopClient(websockets::WebsocketsClient *client) {
+    // return true/false based on disconnect
+    websockets::WebsocketsMessage message = client->readBlocking();
+    bool sendTelemetry = true;
+    switch (message.type()) {
+        case websockets::MessageType::Text:
+            if (!HandleCommandString(message.data())) {
+                sendTelemetry = false;
+            }
+            break;
+        case websockets::MessageType::Close:
+            return false;
+        default:
+            break;
+    }
+    if (sendTelemetry) {
+        client->send(GenTelemetry());
+    } else {
+        client->send("malformed packet or parsing error");
+    }
+    return true;
+}
+
+void BotServer::EndClient(websockets::WebsocketsClient *client) {
+    client->send("kappanet disconnected");
+}
+
+void BotServer::SocketLoop() {
+    websockets::WebsocketsClient client = socketServer->accept();
+    if (client.available()) {
+        HandleNewClient(&client);
+    }
+}
+
+String BotServer::GenTelemetry() {
+    return "";
+}
+
+bool BotServer::HandleCommandString(String command) {
     if (command == "") {
         return false;
     }
@@ -43,91 +68,27 @@ bool BotServer::handleCommandString(String command) {
         return false;
     }
 
-    if (!(json.containsKey("leftPower") &&
-                json.containsKey("rightPower") &&
-                json.containsKey("shootPower") &&
-                json.containsKey("turretMode")))
-    {
+    if (!(  json.containsKey("leftPower") &&
+            json.containsKey("rightPower") &&
+            json.containsKey("shootPower") &&
+            json.containsKey("turretMode"))) {
         return false;
     }
 
     String turretStateStr = json["turretMode"];
-    if (turretStateStr == "stop")
-    {
-        robot->moveTurret(TurretState::STOP);
-    }
-    else if (turretStateStr == "clockwise")
-    {
-        robot->moveTurret(TurretState::CLOCKWISE);
-    }
-    else if (turretStateStr == "counterclockwise")
-    {
-        robot->moveTurret(TurretState::COUNTERCLOCKWISE);
-    }
-    else
-    {
-        robot->moveTurret(TurretState::STOP);
+    if (turretStateStr == "stop") {
+        robot->MoveTurret(TurretState::STOP);
+    } else if (turretStateStr == "clockwise") {
+        robot->MoveTurret(TurretState::CLOCKWISE);
+    } else if (turretStateStr == "counterclockwise") {
+        robot->MoveTurret(TurretState::COUNTERCLOCKWISE);
+    } else {
+        robot->MoveTurret(TurretState::STOP);
     }
 
-    robot->tankDrive(json["leftPower"], json["rightPower"]);
-    robot->shootTurret(json["shootPower"]);
+    robot->TankDrive(json["leftPower"], json["rightPower"]);
+    robot->ShootTurret(json["shootPower"]);
 
     return true;
-}
-
-/*** WEBSOCKETS ***/
-void BotServer::initClient(websockets::WebsocketsClient *client) {
-    client->send("ACK: kappanet connected");
-}
-
-bool BotServer::loopClient(websockets::WebsocketsClient *client) {
-    // return true/false based on disconnect
-    websockets::WebsocketsMessage message = client->readBlocking();
-    switch (message.type()) {
-        // for most of these messages we can just ignore them
-        // really the only thing that we care about is the "Text" type
-        case websockets::MessageType::Empty:
-            break;
-        case websockets::MessageType::Text:
-            handleCommandString(message.data());
-            break;
-        case websockets::MessageType::Binary:
-            break;
-        case websockets::MessageType::Ping:
-            break;
-        case websockets::MessageType::Pong:
-            break;
-        case websockets::MessageType::Close:
-            return false;
-        default:
-            break;
-    }
-    String telemetryData = getTelemetry();
-    client->send(telemetryData);
-    return true;
-}
-
-void BotServer::endClient(websockets::WebsocketsClient *client) {
-    client->send("END: kappanet disconnect");
-}
-
-String BotServer::getTelemetry() {
-    return "";
-}
-
-void BotServer::handleNewClient(websockets::WebsocketsClient *client) {
-    initClient(client);
-    bool looping = true;
-    while (looping) {
-        looping = loopClient(client);
-    }
-    endClient(client);
-}
-
-void BotServer::socketLoop() {
-    websockets::WebsocketsClient client = socketServer->accept();
-    if (client.available()) {
-        handleNewClient(&client);
-    }
 }
 
